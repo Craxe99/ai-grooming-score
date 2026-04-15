@@ -218,6 +218,13 @@
         overflow: hidden;
       }
 
+      .stepper-compact {
+        justify-self: start;
+        width: fit-content;
+        border-color: #d7e2fb;
+        background: #f9fbff;
+      }
+
       .stepper button {
         border: 0;
         width: 32px;
@@ -333,7 +340,7 @@
         <article class="card">
           <div class="field">
             <label for="uInput">Уровень неизвестности кода (1-10)</label>
-            <div class="stepper">
+            <div class="stepper stepper-compact">
               <button id="uMinusBtn" type="button" aria-label="Уменьшить неизвестность">−</button>
               <input id="uInput" type="number" min="1" max="10" step="1" value="1" />
               <button id="uPlusBtn" type="button" aria-label="Увеличить неизвестность">+</button>
