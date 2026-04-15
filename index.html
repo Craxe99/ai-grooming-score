@@ -333,7 +333,11 @@
         <article class="card">
           <div class="field">
             <label for="uInput">Уровень неизвестности кода (1-10)</label>
-            <input id="uInput" type="number" min="1" max="10" step="1" value="1" />
+            <div class="stepper">
+              <button id="uMinusBtn" type="button" aria-label="Уменьшить неизвестность">−</button>
+              <input id="uInput" type="number" min="1" max="10" step="1" value="1" />
+              <button id="uPlusBtn" type="button" aria-label="Увеличить неизвестность">+</button>
+            </div>
           </div>
         </article>
 
@@ -377,6 +381,8 @@
       };
 
       const uInput = document.getElementById("uInput");
+      const uMinusBtn = document.getElementById("uMinusBtn");
+      const uPlusBtn = document.getElementById("uPlusBtn");
       const addPlatformBtn = document.getElementById("addPlatformBtn");
       const platformMenu = document.getElementById("platformMenu");
       const chipRow = document.getElementById("chipRow");
@@ -386,11 +392,19 @@
       const spTotalNode = document.getElementById("spTotal");
       const resultBanner = document.getElementById("resultBanner");
 
-      function clampNumber(value, min, max) {
-        if (!Number.isFinite(value)) {
-          return min;
+      function parseWithFallback(rawValue, min, max, fallback = 1) {
+        const value = String(rawValue ?? "").trim();
+        if (value === "") {
+          return fallback;
         }
-        return Math.max(min, Math.min(max, value));
+
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+          return fallback;
+        }
+
+        const rounded = Math.round(numeric);
+        return Math.max(min, Math.min(max, rounded));
       }
 
       function availablePlatforms() {
@@ -550,7 +564,7 @@
 
         const input = document.createElement("input");
         input.type = "number";
-        input.min = "0";
+        input.min = "1";
         input.step = "1";
         input.value = String(state.spByPlatform[platform] ?? 1);
 
@@ -559,22 +573,30 @@
         plus.textContent = "+";
 
         minus.addEventListener("click", () => {
-          const current = Number(state.spByPlatform[platform] ?? 0);
-          state.spByPlatform[platform] = Math.max(0, current - 1);
+          const current = parseWithFallback(state.spByPlatform[platform], 1, 9999, 1);
+          state.spByPlatform[platform] = Math.max(1, current - 1);
           renderAll();
         });
 
         plus.addEventListener("click", () => {
-          const current = Number(state.spByPlatform[platform] ?? 0);
+          const current = parseWithFallback(state.spByPlatform[platform], 1, 9999, 1);
           state.spByPlatform[platform] = current + 1;
           renderAll();
         });
 
         input.addEventListener("input", (event) => {
-          const value = Number(event.target.value);
-          state.spByPlatform[platform] = Number.isFinite(value) && value >= 0 ? value : 0;
+          const raw = event.target.value;
+          state.spByPlatform[platform] = parseWithFallback(raw, 1, 9999, 1);
           recalculate();
           spTotalNode.textContent = formatNumber(calculateTotalSp());
+        });
+
+        input.addEventListener("blur", (event) => {
+          const raw = event.target.value;
+          const normalized = parseWithFallback(raw, 1, 9999, 1);
+          state.spByPlatform[platform] = normalized;
+          event.target.value = String(normalized);
+          recalculate();
         });
 
         controls.appendChild(minus);
@@ -610,11 +632,7 @@
       }
 
       function recalculate() {
-        const rawU = Number(uInput.value);
-        const u = clampNumber(rawU, 1, 10);
-        if (u !== rawU) {
-          uInput.value = String(u);
-        }
+        const u = parseWithFallback(uInput.value, 1, 10, 1);
 
         const mode = detectPlatformMode(state.selectedPlatforms);
         const k = resolveK(mode, state.selectedPlatforms);
@@ -656,6 +674,25 @@
       });
 
       uInput.addEventListener("input", recalculate);
+      uInput.addEventListener("blur", () => {
+        const normalized = parseWithFallback(uInput.value, 1, 10, 1);
+        uInput.value = String(normalized);
+        recalculate();
+      });
+
+      uMinusBtn.addEventListener("click", () => {
+        const current = parseWithFallback(uInput.value, 1, 10, 1);
+        const next = Math.max(1, current - 1);
+        uInput.value = String(next);
+        recalculate();
+      });
+
+      uPlusBtn.addEventListener("click", () => {
+        const current = parseWithFallback(uInput.value, 1, 10, 1);
+        const next = Math.min(10, current + 1);
+        uInput.value = String(next);
+        recalculate();
+      });
 
       renderAll();
     </script>
