@@ -595,7 +595,7 @@
           const raw = event.target.value;
           state.spByPlatform[platform] = parseWithFallback(raw, 1, 9999, 1);
           recalculate();
-          spTotalNode.textContent = formatNumber(calculateTotalSp());
+          spTotalNode.textContent = formatSpTotal(calculateTotalSp());
         });
 
         input.addEventListener("blur", (event) => {
@@ -631,11 +631,11 @@
         });
       }
 
-      function formatNumber(value) {
+      function formatSpTotal(value) {
         if (!Number.isFinite(value)) {
-          return "0.00";
+          return "0.0";
         }
-        return value.toFixed(2);
+        return value.toFixed(1);
       }
 
       function recalculate() {
@@ -649,7 +649,7 @@
         const threshold = resolveThreshold(mode);
         const decision = resolveDecision(score, threshold);
 
-        spTotalNode.textContent = formatNumber(spTotal);
+        spTotalNode.textContent = formatSpTotal(spTotal);
 
         resultBanner.textContent = decision;
         if (decision === "Рекомендуется AI-подход") {
